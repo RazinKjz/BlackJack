@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Blackjack Multiplayer</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; }
+  #game { display: none; }
+  .hand { margin: 10px; }
+  .current { font-weight: bold; }
+  #messages { margin-top: 20px; height: 100px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+</style>
+</head>
+<body>
+  <h1>Blackjack Multiplayer (2 Players)</h1>
+  <div id="join">
+    <input id="name" placeholder="Enter your name" />
+    <button onclick="joinGame()">Join Game</button>
+    <p id="joinMsg"></p>
+  </div>
+
+  <div id="game">
+    <div id="players"></div>
+    <button id="hitBtn" onclick="hit()" disabled>Hit</button>
+    <button id="standBtn" onclick="stand()" disabled>Stand</button>
+  </div>
+
+  <div id="messages"></div>
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const socket = io();
+
+  let mySid = null;
+
+  function joinGame() {
+    const name = document.getElementById('name').value.trim();
+    if (!name) {
+      alert('Please enter your name');
+      return;
+    }
+    socket.emit('join', {name});
+  }
+
+  socket.on('connect', () => {
+    mySid = socket.id;
+  });
+
+  socket.on('message', msg => {
+    addMessage(msg);
+  });
+
+  socket.on('game_state', state => {
+    document.getElementById('join').style.display = 'none';
+    document.getElementById('game').style.display = 'block';
+
+    const playersDiv = document.getElementById('players');
+    playersDiv.innerHTML = '';
+
+    state.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'hand' + (p.is_current ? ' current' : '');
+      div.textContent = `${p.name}: ${p.hand.join(', ')} (Score: ${p.score})`;
+      playersDiv.appendChild(div);
+    });
+  });
+
+  socket.on('your_turn', sid => {
+    if (sid === mySid) {
+      addMessage('Your turn! Choose to hit or stand.');
+      document.getElementById('hitBtn').disabled = false;
+      document.getElementById('standBtn').disabled = false;
+    } else {
+      document.getElementById('hitBtn').disabled = true;
+      document.getElementById('standBtn').disabled = true;
+    }
+  });
+
+  function hit() {
+    socket.emit('hit');
+    document.getElementById('hitBtn').disabled = true;
+    document.getElementById('standBtn').disabled = true;
+  }
+
+  function stand() {
+    socket.emit('stand');
+    document.getElementById('hitBtn').disabled = true;
+    document.getElementById('standBtn').disabled = true;
+  }
+
+  function addMessage(msg) {
+    const div = document.getElementById('messages');
+    div.innerHTML += `<p>${msg}</p>`;
+    div.scrollTop = div.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
