@@ -2,13 +2,74 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blackjack Multiplayer</title>
 <style>
-  body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; }
+  body { 
+    font-family: Arial, sans-serif; 
+    text-align: center; 
+    margin: 20px; 
+    padding: 10px;
+    background-color: #f0f0f0;
+  }
   #game { display: none; }
-  .hand { margin: 10px; }
-  .current { font-weight: bold; }
-  #messages { margin-top: 20px; height: 100px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+  .hand { 
+    margin: 15px; 
+    padding: 10px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .current { 
+    font-weight: bold; 
+    background-color: #e8f5e8;
+    border: 2px solid #4CAF50;
+  }
+  #messages { 
+    margin-top: 20px; 
+    height: 150px; 
+    overflow-y: auto; 
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    background-color: white;
+    border-radius: 5px;
+    text-align: left;
+  }
+  button {
+    padding: 12px 24px;
+    margin: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+  }
+  button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  button:hover:not(:disabled) {
+    background-color: #45a049;
+  }
+  input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin: 10px;
+  }
+  h1 {
+    color: #333;
+    margin-bottom: 30px;
+  }
+  #join {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    display: inline-block;
+  }
 </style>
 </head>
 <body>

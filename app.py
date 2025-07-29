@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import random
+import socket
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 players = []
 hands = {}
@@ -83,7 +84,7 @@ def on_join(data):
 @socketio.on('hit')
 def on_hit():
     global game_started
-    sid = str(socketio.sid)
+    sid = request.sid  # Use request.sid consistently
     if not game_started or players[current_player_index]['sid'] != sid:
         return
 
@@ -94,16 +95,18 @@ def on_hit():
     if score > 21:
         socketio.emit('message', f'{players[current_player_index]["name"]} busted!')
         next_player()
-        socketio.emit('your_turn', players[current_player_index]['sid'])
+        if len(players) > 0:  # Check if players still exist
+            socketio.emit('your_turn', players[current_player_index]['sid'])
     elif score == 21:
         socketio.emit('message', f'{players[current_player_index]["name"]} hit 21!')
         next_player()
-        socketio.emit('your_turn', players[current_player_index]['sid'])
+        if len(players) > 0:  # Check if players still exist
+            socketio.emit('your_turn', players[current_player_index]['sid'])
 
 @socketio.on('stand')
 def on_stand():
     global game_started
-    sid = str(socketio.sid)
+    sid = request.sid  # Use request.sid consistently
     if not game_started or players[current_player_index]['sid'] != sid:
         return
 
@@ -130,13 +133,14 @@ def on_stand():
         # Reset game
         reset_game()
     else:
-        socketio.emit('your_turn', players[current_player_index]['sid'])
+        if len(players) > 0:  # Check if players still exist
+            socketio.emit('your_turn', players[current_player_index]['sid'])
     broadcast_game_state()
 
 @socketio.on('disconnect')
 def on_disconnect():
     global game_started
-    sid = str(socketio.sid)
+    sid = request.sid  # Use request.sid consistently
     leaving_player = next((p for p in players if p['sid'] == sid), None)
     if leaving_player:
         print(f'{leaving_player["name"]} disconnected.')
@@ -154,5 +158,26 @@ def reset_game():
     current_player_index = 0
     game_started = False
 
+def get_local_ip():
+    """Get the local IP address of the Raspberry Pi"""
+    try:
+        # Connect to a remote server to determine local IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return "127.0.0.1"
+
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    local_ip = get_local_ip()
+    port = 5000
+    print(f"Starting Blackjack server...")
+    print(f"Local access: http://localhost:{port}")
+    print(f"Network access: http://{local_ip}:{port}")
+    print(f"Other devices can connect using: http://{local_ip}:{port}")
+    print("Make sure your Raspberry Pi and other devices are on the same network!")
+    
+    # Run on all interfaces (0.0.0.0) so other devices can connect
+    socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)
