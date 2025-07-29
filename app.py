@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import random
 import socket
+import platform
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -159,7 +161,7 @@ def reset_game():
     game_started = False
 
 def get_local_ip():
-    """Get the local IP address of the Raspberry Pi"""
+    """Get the local IP address of the device"""
     try:
         # Connect to a remote server to determine local IP
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -170,14 +172,118 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
+def detect_platform():
+    """Detect if running on Raspberry Pi or PC"""
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    
+    # Check if it's a Raspberry Pi
+    if system == "linux":
+        try:
+            with open('/proc/cpuinfo', 'r') as f:
+                cpuinfo = f.read().lower()
+                if 'raspberry pi' in cpuinfo or 'bcm' in cpuinfo:
+                    return "raspberry_pi"
+        except:
+            pass
+        return "linux_pc"
+    elif system == "windows":
+        return "windows_pc"
+    elif system == "darwin":
+        return "mac"
+    else:
+        return "unknown"
+
+def get_network_interfaces():
+    """Get available network interfaces and their IP addresses"""
+    interfaces = {}
+    try:
+        if platform.system().lower() == "windows":
+            import subprocess
+            result = subprocess.run(['ipconfig'], capture_output=True, text=True, shell=True)
+            # Parse Windows ipconfig output
+            lines = result.stdout.split('\n')
+            current_adapter = None
+            for line in lines:
+                line = line.strip()
+                if 'adapter' in line.lower() and ':' in line:
+                    current_adapter = line.split(':')[0].strip()
+                elif 'IPv4 Address' in line and current_adapter:
+                    ip = line.split(':')[1].strip()
+                    if not ip.startswith('127.') and '.' in ip:
+                        interfaces[current_adapter] = ip
+        else:
+            # For Linux/Mac systems
+            import subprocess
+            result = subprocess.run(['hostname', '-I'], capture_output=True, text=True)
+            ips = result.stdout.strip().split()
+            for i, ip in enumerate(ips):
+                if not ip.startswith('127.') and '.' in ip:
+                    interfaces[f"Interface {i+1}"] = ip
+    except:
+        pass
+    
+    return interfaces
+
 if __name__ == '__main__':
+    platform_type = detect_platform()
     local_ip = get_local_ip()
     port = 5000
-    print(f"Starting Blackjack server...")
-    print(f"Local access: http://localhost:{port}")
-    print(f"Network access: http://{local_ip}:{port}")
-    print(f"Other devices can connect using: http://{local_ip}:{port}")
-    print("Make sure your Raspberry Pi and other devices are on the same network!")
+    
+    print("=" * 60)
+    print("🃏 BLACKJACK MULTIPLAYER SERVER 🃏")
+    print("=" * 60)
+    
+    # Display platform information
+    if platform_type == "raspberry_pi":
+        print("🍓 Running on Raspberry Pi")
+        print("📱 Perfect for mobile device connections!")
+    elif platform_type == "windows_pc":
+        print("🖥️  Running on Windows PC")
+        print("🌐 Acting as game host for network play")
+    elif platform_type == "linux_pc":
+        print("🐧 Running on Linux PC")
+        print("🌐 Acting as game host for network play")
+    elif platform_type == "mac":
+        print("🍎 Running on Mac")
+        print("🌐 Acting as game host for network play")
+    else:
+        print(f"🖥️  Running on {platform.system()}")
+        print("🌐 Acting as game host for network play")
+    
+    print(f"\n📡 Network Configuration:")
+    print(f"   Local access: http://localhost:{port}")
+    print(f"   Main IP: http://{local_ip}:{port}")
+    
+    # Show additional network interfaces
+    interfaces = get_network_interfaces()
+    if interfaces:
+        print(f"\n🔗 Available Network Connections:")
+        for interface, ip in interfaces.items():
+            print(f"   {interface}: http://{ip}:{port}")
+    
+    print(f"\n📋 Connection Instructions:")
+    print(f"   1. Make sure all devices are on the same WiFi network")
+    print(f"   2. On other devices, open a web browser")
+    print(f"   3. Go to: http://{local_ip}:{port}")
+    print(f"   4. Enter your name and join the game!")
+    
+    print(f"\n🎮 Game Rules:")
+    print(f"   • 2 players maximum")
+    print(f"   • Standard Blackjack rules")
+    print(f"   • Goal: Get as close to 21 as possible")
+    print(f"   • Face cards = 10, Aces = 11 (auto-convert to 1)")
+    
+    if platform_type == "windows_pc":
+        print(f"\n💡 Windows PC Tips:")
+        print(f"   • If others can't connect, check Windows Firewall")
+        print(f"   • Allow Python through firewall if prompted")
+        print(f"   • Make sure you're on the same network as other players")
+    
+    print(f"\n🛑 To stop the server: Press Ctrl+C")
+    print("=" * 60)
+    print("🚀 Starting server... Players can now connect!")
+    print("=" * 60)
     
     # Run on all interfaces (0.0.0.0) so other devices can connect
     socketio.run(app, host='0.0.0.0', port=port, debug=True, allow_unsafe_werkzeug=True)

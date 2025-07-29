@@ -1,18 +1,20 @@
-# Blackjack Multiplayer Game for Raspberry Pi
+# Blackjack Multiplayer Game for Raspberry Pi & PC
 
-A Flask-SocketIO based multiplayer blackjack game designed to run on a Raspberry Pi, allowing other devices to connect and play over the local network.
+A Flask-SocketIO based multiplayer blackjack game designed to run on both Raspberry Pi and PC, allowing other devices to connect and play over the local network.
 
 ## Features
 
 - Multiplayer blackjack game (2 players)
 - Real-time game updates using WebSockets
 - Mobile-friendly web interface
-- Runs on Raspberry Pi
+- Cross-platform: Works on Raspberry Pi, Windows PC, Mac, and Linux
+- Automatic platform detection and configuration
 - Other devices can connect over WiFi/LAN
 
 ## Requirements
 
-- Raspberry Pi (any model with network connectivity)
+- **Raspberry Pi:** Any model with network connectivity
+- **PC:** Windows 10/11, macOS, or Linux
 - Python 3.7 or higher
 - Active internet connection for initial setup
 - All devices must be on the same network
@@ -31,47 +33,86 @@ A Flask-SocketIO based multiplayer blackjack game designed to run on a Raspberry
    sudo apt install python3 python3-pip -y
    ```
 
-3. **Clone or copy the project files to your Raspberry Pi**
-
-4. **Navigate to the project directory:**
+3. **Navigate to the project directory:**
    ```bash
    cd BlackJack
    ```
 
-5. **Install required packages:**
+4. **Install required packages:**
    ```bash
    pip3 install -r requirements.txt
    ```
 
-6. **Make the startup script executable:**
+5. **Make the startup script executable:**
    ```bash
    chmod +x start_server.sh
    ```
 
+### On Windows PC:
+
+1. **Install Python:**
+   - Download from [python.org](https://python.org)
+   - ⚠️ **Important:** Check "Add Python to PATH" during installation
+
+2. **Open Command Prompt or PowerShell in the project folder**
+
+3. **Install required packages:**
+   ```cmd
+   pip install -r requirements.txt
+   ```
+
+### On Mac/Linux PC:
+
+1. **Ensure Python 3 is installed:**
+   ```bash
+   python3 --version
+   ```
+
+2. **Install required packages:**
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+
 ## Running the Game
 
-### Option 1: Using the startup script (Recommended)
+### Raspberry Pi:
 ```bash
 ./start_server.sh
 ```
 
-### Option 2: Direct Python execution
+### Windows PC:
+**Option 1 - Batch file (double-click):**
+```cmd
+start_server.bat
+```
+
+**Option 2 - PowerShell (recommended):**
+```powershell
+.\start_server.ps1
+```
+
+**Option 3 - Command line:**
+```cmd
+python app.py
+```
+
+### Mac/Linux PC:
 ```bash
 python3 app.py
 ```
 
 ## Connecting Other Devices
 
-1. **Start the server on your Raspberry Pi** (see above)
+1. **Start the server** on your host device (Raspberry Pi or PC)
 
-2. **Find your Raspberry Pi's IP address:**
-   - The startup script will display it
-   - Or run: `hostname -I | cut -d' ' -f1`
-   - Example: `192.168.1.100`
+2. **Note the IP address displayed** when the server starts
+   - The application automatically detects and shows available network connections
+   - Example output: `Main IP: http://192.168.1.100:5000`
 
 3. **On other devices (phones, tablets, computers):**
+   - Connect to the same WiFi network as the host
    - Open a web browser
-   - Navigate to: `http://[PI_IP_ADDRESS]:5000`
+   - Navigate to the displayed IP address
    - Example: `http://192.168.1.100:5000`
 
 4. **Join the game:**
